@@ -1,0 +1,49 @@
+{
+  "entities": {
+    "Country": {
+      "title": "Country",
+      "description": "A sovereign nation in the simulation.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "population": { "type": "number" },
+        "gdp": { "type": "number" },
+        "treasury": { "type": "number" },
+        "stability": { "type": "number" },
+        "governmentType": { "type": "string" },
+        "manpower": { "type": "number" },
+        "equipment": { "type": "number" },
+        "readiness": { "type": "number" },
+        "culture": { "type": "string" },
+        "ideology": { "type": "string" },
+        "infrastructure": { "type": "number" },
+        "technologyLevel": { "type": "number" }
+      },
+      "required": ["id", "name"]
+    },
+    "War": {
+      "title": "War",
+      "description": "An ongoing war.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "attackerId": { "type": "string" },
+        "defenderId": { "type": "string" },
+        "warScore": { "type": "number" },
+        "casualties": { "type": "object" }
+      },
+      "required": ["id", "attackerId", "defenderId"]
+    }
+  },
+  "firestore": {
+    "/countries/{countryId}": {
+      "schema": "Country",
+      "description": "Stores country data."
+    },
+    "/wars/{warId}": {
+      "schema": "War",
+      "description": "Stores war data."
+    }
+  }
+}
