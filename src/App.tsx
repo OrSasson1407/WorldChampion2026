@@ -16,6 +16,8 @@ import { Toast } from './components/Toast';
 import { DynamicNews } from './components/DynamicNews';
 import { Country, EspionageType, Province } from './game/core/Models';
 import { GameState } from './game/core/GameState';
+import { persistConquest } from './game/actions/conquerCountry';
+import { DebugConquestPanel } from './components/DebugConquestPanel';
 
 export default function App() {
   const simulationRef = useRef<SimulationManager | null>(null);
@@ -98,6 +100,24 @@ export default function App() {
                 onSelectCountry={setSelectedCountryId}
             />
             <WarDashboard gameState={gameState} />
+            {import.meta.env.DEV && (
+                <DebugConquestPanel
+                    countries={Object.values(gameState.countries) as Country[]}
+                    onConquer={(attackerId, targetId, status) => {
+                        const attacker = gameState.countries[attackerId];
+                        const target = gameState.countries[targetId];
+                        const result = simulationRef.current!.conquerCountry(attackerId, targetId, status);
+                        updateState();
+                        if (result.success && attacker && target) {
+                            // Best-effort, non-blocking - never gates the map update above.
+                            persistConquest(attacker, target, status).catch((err) =>
+                                console.warn('Failed to persist conquest to Firestore:', err)
+                            );
+                        }
+                        setToast({ message: result.message, success: result.success });
+                    }}
+                />
+            )}
         </div>
         
         <div>

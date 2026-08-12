@@ -66,6 +66,47 @@ export class SimulationManager {
       }
   }
 
+  /**
+   * The core conquest game action. This mutates authoritative game state
+   * only - the map is a view over this state and re-renders automatically
+   * because App re-reads `getState()` after this call. No map/rendering
+   * code is touched here, and the static GeoJSON is never modified.
+   *
+   * `status` distinguishes a territory that is merely occupied (still legally
+   * belongs to its original sovereign) from one that has been annexed
+   * outright (the sovereign itself becomes the new controller).
+   */
+  public conquerCountry(
+    attackerId: string,
+    targetId: string,
+    status: 'OCCUPIED' | 'ANNEXED' = 'OCCUPIED'
+  ): { success: boolean; message: string } {
+    const attacker = this.state.countries[attackerId];
+    const target = this.state.countries[targetId];
+    if (!attacker) return { success: false, message: `Unknown attacker: ${attackerId}` };
+    if (!target) return { success: false, message: `Unknown target: ${targetId}` };
+    if (attackerId === targetId) return { success: false, message: 'A country cannot conquer itself.' };
+
+    target.controllerId = attackerId;
+    target.occupationStatus = status;
+    if (status === 'ANNEXED') {
+      target.sovereignId = attackerId;
+    }
+
+    console.log(`${attacker.name} ${status === 'ANNEXED' ? 'annexed' : 'conquered'} ${target.name}`);
+    return { success: true, message: `${attacker.name} now controls ${target.name} (${status}).` };
+  }
+
+  /** Restores a country to independent, self-controlled status (e.g. after a peace deal or liberation). */
+  public liberateCountry(targetId: string): { success: boolean; message: string } {
+    const target = this.state.countries[targetId];
+    if (!target) return { success: false, message: `Unknown country: ${targetId}` };
+
+    target.controllerId = target.sovereignId;
+    target.occupationStatus = 'INDEPENDENT';
+    return { success: true, message: `${target.name} is independent again.` };
+  }
+
   public recruitArmy(countryId: string): void {
       const country = this.state.countries[countryId];
       const cost = 1000000;

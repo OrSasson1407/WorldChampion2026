@@ -1,6 +1,13 @@
 export interface Country {
   id: string;
   name: string;
+  /**
+   * Stable ISO 3166-1 alpha-3 geographic identifier for this country.
+   * Used to look up the country's shape in the static world GeoJSON
+   * (see src/game/geo/worldGeo.ts). Never derived from game state and
+   * never mutated at runtime - it is purely a link to real-world geography.
+   */
+  iso3: string;
   sovereignId: string;
   controllerId: string;
   occupationStatus: "INDEPENDENT" | "OCCUPIED" | "ANNEXED";
