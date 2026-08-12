@@ -1,4 +1,4 @@
-﻿import { Country, Province, Army, War, Government, Treaty, Sanction, IntelNetwork, MilitaryBranch, General, TradeAgreement, CentralBank } from './Models';
+﻿import { Country, Province, Army, War, Government, Treaty, Sanction, IntelNetwork, MilitaryBranch, General, TradeAgreement, CentralBank, GameEvent } from './Models';
 
 export interface GameState {
   worldSeed: string;
@@ -18,6 +18,7 @@ export interface GameState {
   intelNetworks: Record<string, IntelNetwork>;
   militaryBranches: Record<string, MilitaryBranch>; // key: `${countryId}-${type}`
   generals: Record<string, General>;
+  events: GameEvent[];
 }
 
 export const INITIAL_GAME_STATE: GameState = {
@@ -37,4 +38,5 @@ export const INITIAL_GAME_STATE: GameState = {
   intelNetworks: {},
   militaryBranches: {},
   generals: {},
+  events: [],
 };

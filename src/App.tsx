@@ -60,6 +60,7 @@ export default function App() {
             intelNetworks: {},
             militaryBranches,
             generals: {},
+            events: [],
         };
         simulationRef.current = new SimulationManager(initialState);
         setGameState(initialState);

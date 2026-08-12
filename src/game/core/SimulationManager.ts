@@ -1,5 +1,6 @@
 ﻿import { GameState } from './GameState';
-import { Country, Army, War, EspionageType, Government, PoliticalParty, ResourceType, MilitaryBranch, MilitaryBranchType, General, Treaty, TreatyType, Sanction, IntelNetwork, IntelCategory } from './Models';
+import { Country, Army, War, EspionageType, Government, PoliticalParty, ResourceType, MilitaryBranch, MilitaryBranchType, General, Treaty, TreatyType, Sanction, IntelNetwork, IntelCategory, EventCategory } from './Models';
+import { EventGenerator } from './EventGenerator';
 import { AIManager } from './AIManager';
 
 const ESPIONAGE_CATEGORY: Record<EspionageType, IntelCategory> = {
@@ -52,6 +53,7 @@ export class SimulationManager {
     for (const countryId in this.state.countries) {
       const country = this.state.countries[countryId];
       const centralBank = this.state.centralBanks[countryId];
+      const economyBefore = EventGenerator.snapshotEconomy(country);
 
       const budget = country.budgetAllocation || { military: 30, social: 40, infrastructure: 30 };
       country.budgetAllocation = budget;
@@ -88,6 +90,7 @@ export class SimulationManager {
           centralBank.exchangeRateToUSD *= (1 + (centralBank.interestRate - 3) * 0.0005);
           centralBank.foreignReserves += country.income * 0.01;
       }
+      EventGenerator.checkEconomyTriggers(this.state, countryId, economyBefore, country);
     }
   }
 
@@ -130,6 +133,7 @@ export class SimulationManager {
       for (const countryId in this.state.countries) {
           const country = this.state.countries[countryId];
           const government = this.state.governments[countryId];
+          const politicsBefore = { stability: country.stability, approvalRating: government ? government.approvalRating : 0 };
 
           if (country.debt > country.gdp * 0.5) {
               country.stability -= 0.05;
@@ -143,6 +147,7 @@ export class SimulationManager {
           this.updateCoupRisk(country, government);
           this.checkForCoup(countryId, country, government);
           this.checkForElection(countryId, government);
+          EventGenerator.checkPoliticsTriggers(this.state, countryId, politicsBefore, { stability: country.stability, approvalRating: government.approvalRating });
       }
   }
 
@@ -176,6 +181,7 @@ export class SimulationManager {
       const roll = Math.random() * 100;
       if (roll < government.coupRisk) {
           console.log(`COUP in ${country.name}!`);
+          EventGenerator.emit(this.state, countryId, EventCategory.POLITICS, `A military coup has overthrown the government of ${country.name}.`, 5);
           const newRulingId = `${countryId}-party-coup-${this.state.currentTurn}`;
           government.parties.push({
               id: newRulingId,
@@ -196,6 +202,8 @@ export class SimulationManager {
   private checkForElection(countryId: string, government: Government): void {
       if (this.state.currentDate < government.nextElectionDate) return;
       console.log(`Election held in ${countryId}`);
+      const electionCountryName = this.state.countries[countryId]?.name ?? countryId;
+      EventGenerator.emit(this.state, countryId, EventCategory.POLITICS, `${electionCountryName} has held a general election.`, 2);
 
       let totalPopularity = 0;
       for (const party of government.parties) {
@@ -573,6 +581,12 @@ export class SimulationManager {
 
   private resolveMilitary(): void {
     console.log("Resolving military...");
+    const militaryBefore: Record<string, { militaryPower: number; readiness: number; manpower: number }> = {};
+    for (const countryId in this.state.countries) {
+        const c = this.state.countries[countryId];
+        militaryBefore[countryId] = { militaryPower: c.militaryPower, readiness: c.readiness, manpower: c.manpower };
+    }
+
     for (const countryId in this.state.countries) {
         const country = this.state.countries[countryId];
         if (country.treasury > 5000000) {
@@ -620,9 +634,17 @@ export class SimulationManager {
         this.applyLossesToBranches(war.defenderId, defenderLosses);
         
         if (Math.abs(war.warScore) > 100) {
-            console.log(`War ended: ${warId}. Winner: ${war.warScore > 0 ? attacker.name : defender.name}`);
+            const winner = war.warScore > 0 ? attacker : defender;
+            const loser = war.warScore > 0 ? defender : attacker;
+            console.log(`War ended: ${warId}. Winner: ${winner.name}`);
+            EventGenerator.emit(this.state, winner.id, EventCategory.MILITARY, `${winner.name} has won the war against ${loser.name}.`, 3);
+            EventGenerator.emit(this.state, loser.id, EventCategory.MILITARY, `${loser.name} has been defeated by ${winner.name}.`, 3);
             delete this.state.wars[warId];
         }
+    }
+
+    for (const countryId in this.state.countries) {
+        EventGenerator.checkMilitaryTriggers(this.state, countryId, militaryBefore[countryId], this.state.countries[countryId]);
     }
   }
 

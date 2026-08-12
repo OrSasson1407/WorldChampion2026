@@ -39,6 +39,8 @@
   infrastructure: number;
   isAI: boolean;
   color: string;
+  // Phase 7: AI personality (optional so old seed data doesn't break)
+  aiPersonality?: AIPersonality;
 }
 
 export enum ResourceType {
@@ -122,10 +124,21 @@ export interface Army {
   readiness: number;
 }
 
+export enum EventCategory {
+  ECONOMY = "Economy",
+  MILITARY = "Military",
+  POLITICS = "Politics",
+  DIPLOMACY = "Diplomacy"
+}
+
 export interface GameEvent {
   id: string;
+  countryId: string;
+  category: EventCategory;
   message: string;
+  turn: number;
   timestamp: number;
+  severity?: number;
 }
 
 // ===================== PHASE 0: NEW SYSTEM TYPES =====================
@@ -231,4 +244,11 @@ export interface MilitaryBranch {
   fuel: number;
   ammunition: number;
   morale?: number; // 0-100, optional so Phase 0 seed data still validates
+}
+
+// ===================== PHASE 7: AI PERSONALITY =====================
+export enum AIPersonality {
+  AGGRESSIVE = "Aggressive",
+  DEFENSIVE = "Defensive",
+  ECONOMIC = "Economic"
 }
