@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -16,8 +16,6 @@ import { Toast } from './components/Toast';
 import { DynamicNews } from './components/DynamicNews';
 import { Country, EspionageType, Province } from './game/core/Models';
 import { GameState } from './game/core/GameState';
-import { persistConquest } from './game/actions/conquerCountry';
-import { DebugConquestPanel } from './components/DebugConquestPanel';
 
 export default function App() {
   const simulationRef = useRef<SimulationManager | null>(null);
@@ -31,7 +29,7 @@ export default function App() {
     async function loadData() {
         setLoading(true);
         const countries = await DataManager.loadInitialCountries();
-        
+
         // Load provinces from Firestore
         const provincesCol = collection(db, 'provinces');
         const provinceSnapshot = await getDocs(provincesCol);
@@ -40,15 +38,28 @@ export default function App() {
             provinces[doc.id] = doc.data() as Province;
         });
 
+        // Phase 0/1: load newly seeded collections
+        const governments = await DataManager.loadGovernments();
+        const centralBanks = await DataManager.loadCentralBanks();
+        const militaryBranches = await DataManager.loadMilitaryBranches();
+
         const initialState: GameState = {
             worldSeed: "initial-seed",
             currentTurn: 0,
             currentDate: "2026-01-01",
-            version: "1.0.0",
+            version: "1.1.0",
             countries,
             provinces,
             armies: {},
             wars: {},
+            governments,
+            centralBanks,
+            treaties: {},
+            sanctions: {},
+            tradeAgreements: {},
+            intelNetworks: {},
+            militaryBranches,
+            generals: {},
         };
         simulationRef.current = new SimulationManager(initialState);
         setGameState(initialState);
@@ -75,6 +86,7 @@ export default function App() {
   };
 
   const selectedCountry = selectedCountryId ? gameState.countries[selectedCountryId] : null;
+  const selectedGovernment = selectedCountryId ? gameState.governments[selectedCountryId] : null;
 
   return (
     <div className="p-4 max-w-6xl mx-auto">
@@ -100,24 +112,6 @@ export default function App() {
                 onSelectCountry={setSelectedCountryId}
             />
             <WarDashboard gameState={gameState} />
-            {import.meta.env.DEV && (
-                <DebugConquestPanel
-                    countries={Object.values(gameState.countries) as Country[]}
-                    onConquer={(attackerId, targetId, status) => {
-                        const attacker = gameState.countries[attackerId];
-                        const target = gameState.countries[targetId];
-                        const result = simulationRef.current!.conquerCountry(attackerId, targetId, status);
-                        updateState();
-                        if (result.success && attacker && target) {
-                            // Best-effort, non-blocking - never gates the map update above.
-                            persistConquest(attacker, target, status).catch((err) =>
-                                console.warn('Failed to persist conquest to Firestore:', err)
-                            );
-                        }
-                        setToast({ message: result.message, success: result.success });
-                    }}
-                />
-            )}
         </div>
         
         <div>
@@ -147,6 +141,15 @@ export default function App() {
                 />
             ) : (
                 <div className="border p-4 text-gray-500">Select a country on the map</div>
+            )}
+            {selectedGovernment && (
+                <div className="border p-4 mt-4">
+                    <h3 className="font-bold">Government</h3>
+                    <p>Approval: {selectedGovernment.approvalRating.toFixed(1)}%</p>
+                    <p>Corruption: {selectedGovernment.corruptionLevel.toFixed(1)}%</p>
+                    <p>Coup Risk: {selectedGovernment.coupRisk.toFixed(1)}%</p>
+                    <p>Next Election: {selectedGovernment.nextElectionDate}</p>
+                </div>
             )}
             {selectedCountry && targetCountryId && (
                 <EspionagePanel 

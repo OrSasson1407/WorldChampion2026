@@ -1,4 +1,4 @@
-rules_version = '2';
+﻿rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     match /countries/{countryId} {
@@ -15,6 +15,38 @@ service cloud.firestore {
 
     match /events/{eventId} {
       allow read: if true;
+    }
+
+    match /governments/{countryId} {
+      allow read, write: if true;
+    }
+
+    match /centralBanks/{countryId} {
+      allow read, write: if true;
+    }
+
+    match /treaties/{treatyId} {
+      allow read, write: if true;
+    }
+
+    match /sanctions/{sanctionId} {
+      allow read, write: if true;
+    }
+
+    match /tradeAgreements/{tradeId} {
+      allow read, write: if true;
+    }
+
+    match /intelNetworks/{networkId} {
+      allow read, write: if true;
+    }
+
+    match /militaryBranches/{branchId} {
+      allow read, write: if true;
+    }
+
+    match /generals/{generalId} {
+      allow read, write: if true;
     }
   }
 }
