@@ -243,6 +243,12 @@ export class SimulationManager {
       }
   }
 
+  public setInterestRate(countryId: string, rate: number): void {
+      const centralBank = this.state.centralBanks[countryId];
+      if (!centralBank) return;
+      centralBank.interestRate = Math.min(Math.max(rate, 0), 25);
+  }
+
   // ===================== PHASE 4: DEEP DIPLOMACY =====================
   public signTreaty(type: TreatyType, memberCountryIds: string[]): string {
       const id = `treaty-${Date.now()}`;
@@ -673,3 +679,4 @@ export class SimulationManager {
     return this.state;
   }
 }
+

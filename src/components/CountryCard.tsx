@@ -1,4 +1,4 @@
-import React from 'react';
+﻿import React from 'react';
 import { Country } from '../game/core/Models';
 
 export interface Props {
@@ -24,6 +24,25 @@ export const CountryCard: React.FC<Props> = (props) => {
       <p>Military Power: {country.militaryPower}</p>
       <p>Tech: {country.technologyLevel}</p>
       <p>Stability: {country.stability.toFixed(2)}</p>
+
+      <div className="mt-3 grid grid-cols-2 gap-x-4 gap-y-1 text-sm text-gray-700 border-t pt-2">
+        <p>Debt: ${country.debt.toLocaleString()}</p>
+        <p>Inflation: {country.inflation.toFixed(2)}%</p>
+        <p>Unemployment: {(country.unemployment ?? 5).toFixed(1)}%</p>
+        <p>Reputation: {(country.internationalReputation ?? 50).toFixed(0)}/100</p>
+        <p>Manpower: {country.manpower.toLocaleString()}</p>
+        <p>Equipment: {country.equipment.toLocaleString()}</p>
+        <p>Readiness: {country.readiness.toFixed(0)}%</p>
+        <p>Infrastructure: {country.infrastructure.toFixed(0)}</p>
+      </div>
+
+      {country.budgetAllocation && (
+        <div className="mt-2 text-sm text-gray-700">
+          <span className="font-medium">Budget:</span> Military {country.budgetAllocation.military.toFixed(0)}% ·
+          {' '}Social {country.budgetAllocation.social.toFixed(0)}% ·
+          {' '}Infrastructure {country.budgetAllocation.infrastructure.toFixed(0)}%
+        </div>
+      )}
       
       <div className="flex gap-2 mt-2">
         <button 
@@ -71,3 +90,4 @@ export const CountryCard: React.FC<Props> = (props) => {
     </div>
   );
 }
+

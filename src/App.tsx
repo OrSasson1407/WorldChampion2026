@@ -14,6 +14,10 @@ import { WarDashboard } from './components/WarDashboard';
 import { EspionagePanel } from './components/EspionagePanel';
 import { Toast } from './components/Toast';
 import { DynamicNews } from './components/DynamicNews';
+import { ParliamentPanel } from './components/ParliamentPanel';
+import { CentralBankPanel } from './components/CentralBankPanel';
+import { AllianceManager } from './components/AllianceManager';
+import { IntelNetworkView } from './components/IntelNetworkView';
 import { Country, EspionageType, Province } from './game/core/Models';
 import { GameState } from './game/core/GameState';
 
@@ -88,6 +92,8 @@ export default function App() {
 
   const selectedCountry = selectedCountryId ? gameState.countries[selectedCountryId] : null;
   const selectedGovernment = selectedCountryId ? gameState.governments[selectedCountryId] : null;
+  const selectedCentralBank = selectedCountryId ? gameState.centralBanks[selectedCountryId] : null;
+  const allCountries = Object.values(gameState.countries) as Country[];
 
   return (
     <div className="p-4 max-w-6xl mx-auto">
@@ -106,20 +112,49 @@ export default function App() {
       <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="md:col-span-2">
             <MapRenderer 
-                countries={Object.values(gameState.countries) as Country[]}
+                countries={allCountries}
                 allCountries={gameState.countries}
                 wars={gameState.wars}
                 selectedCountryId={selectedCountryId}
                 onSelectCountry={setSelectedCountryId}
             />
             <WarDashboard gameState={gameState} />
+
+            {selectedCountry && (
+                <AllianceManager
+                    country={selectedCountry}
+                    otherCountries={allCountries}
+                    treaties={gameState.treaties}
+                    onSignTreaty={(type, targetId) => {
+                        simulationRef.current!.signTreaty(type, [selectedCountry.id, targetId]);
+                        updateState();
+                    }}
+                    onBreakTreaty={(treatyId) => {
+                        simulationRef.current!.breakTreaty(treatyId);
+                        updateState();
+                    }}
+                />
+            )}
+
+            {selectedCountry && (
+                <IntelNetworkView
+                    country={selectedCountry}
+                    otherCountries={allCountries}
+                    intelNetworks={gameState.intelNetworks}
+                    onRecruitAgent={(targetId, category) => {
+                        const result = simulationRef.current!.recruitAgent(selectedCountry.id, targetId, category);
+                        setToast(result);
+                        updateState();
+                    }}
+                />
+            )}
         </div>
         
         <div>
             {selectedCountry ? (
                 <CountryCard 
                     country={selectedCountry} 
-                    otherCountries={Object.values(gameState.countries) as Country[]}
+                    otherCountries={allCountries}
                     onRecruit={() => {
                         simulationRef.current!.recruitArmy(selectedCountry.id);
                         updateState();
@@ -143,15 +178,19 @@ export default function App() {
             ) : (
                 <div className="border p-4 text-gray-500">Select a country on the map</div>
             )}
-            {selectedGovernment && (
-                <div className="border p-4 mt-4">
-                    <h3 className="font-bold">Government</h3>
-                    <p>Approval: {selectedGovernment.approvalRating.toFixed(1)}%</p>
-                    <p>Corruption: {selectedGovernment.corruptionLevel.toFixed(1)}%</p>
-                    <p>Coup Risk: {selectedGovernment.coupRisk.toFixed(1)}%</p>
-                    <p>Next Election: {selectedGovernment.nextElectionDate}</p>
-                </div>
-            )}
+
+            <ParliamentPanel government={selectedGovernment ?? null} country={selectedCountry ?? null} />
+
+            <CentralBankPanel
+                centralBank={selectedCentralBank ?? null}
+                country={selectedCountry ?? null}
+                onSetInterestRate={(rate) => {
+                    if (!selectedCountry) return;
+                    simulationRef.current!.setInterestRate(selectedCountry.id, rate);
+                    updateState();
+                }}
+            />
+
             {selectedCountry && targetCountryId && (
                 <EspionagePanel 
                     targetName={gameState.countries[targetCountryId]?.name || "Unknown"}
@@ -170,9 +209,14 @@ export default function App() {
                     onClose={() => setToast(null)} 
                 />
             )}
-            <DynamicNews />
+            <DynamicNews 
+                events={gameState.events} 
+                countryId={selectedCountryId} 
+                countryName={selectedCountry?.name}
+            />
         </div>
       </div>
     </div>
   );
 }
+
