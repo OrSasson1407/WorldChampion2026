@@ -18,9 +18,9 @@ import { ParliamentPanel } from './components/ParliamentPanel';
 import { CentralBankPanel } from './components/CentralBankPanel';
 import { AllianceManager } from './components/AllianceManager';
 import { IntelNetworkView } from './components/IntelNetworkView';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { Country, EspionageType, Province } from './game/core/Models';
 import { GameState } from './game/core/GameState';
-import React from 'react';
 
 type TabId = 'map' | 'war' | 'diplomacy' | 'intel' | 'economy' | 'politics' | 'news';
 
@@ -33,48 +33,6 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'politics', label: 'Politics' },
   { id: 'news', label: 'News' },
 ];
-
-// Inlined here (not a separate file) on purpose: without an error boundary
-// anywhere, any uncaught render error unmounts the ENTIRE app -- every click
-// handler dies with it, and only a full refresh recovers. Keeping it in this
-// same file means the fix can never end up half-applied via a missing import.
-interface ErrorBoundaryProps {
-  children: React.ReactNode;
-  label: string;
-}
-interface ErrorBoundaryState {
-  error: Error | null;
-}
-class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
-  state: ErrorBoundaryState = { error: null };
-
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
-    return { error };
-  }
-
-  componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error(`[ErrorBoundary:${this.props.label}]`, error, info.componentStack);
-  }
-
-  render() {
-    if (this.state.error) {
-      return (
-        <div className="border border-red-400 bg-red-50 text-red-800 p-3 rounded text-sm">
-          <p className="font-semibold">{this.props.label} crashed.</p>
-          <p className="mt-1 text-xs opacity-80">{this.state.error.message}</p>
-          <button
-            type="button"
-            className="mt-2 px-3 py-1 bg-red-600 text-white rounded hover:bg-red-700 text-xs"
-            onClick={() => this.setState({ error: null })}
-          >
-            Try again
-          </button>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
 
 export default function App() {
   const simulationRef = useRef<SimulationManager | null>(null);
