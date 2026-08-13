@@ -1,4 +1,4 @@
-﻿import React from 'react';
+import React from 'react';
 import { GameState } from '../game/core/GameState';
 import { War, MilitaryBranch, MilitaryBranchType } from '../game/core/Models';
 
@@ -69,6 +69,7 @@ export const WarDashboard: React.FC<Props> = ({ gameState }) => {
                     </p>
                     <p>War Score: {war.warScore.toFixed(1)}</p>
                     <p>Casualties: {(war.casualties.attacker + war.casualties.defender).toLocaleString()}</p>
+                    <p className="text-xs text-gray-600">War Exhaustion — {gameState.countries[war.attackerId]?.name}: {(war.exhaustion?.attacker ?? 0).toFixed(0)}% · {gameState.countries[war.defenderId]?.name}: {(war.exhaustion?.defender ?? 0).toFixed(0)}%</p>
 
                     <div className="flex gap-4 mt-2 flex-wrap">
                         <CountryBranches gameState={gameState} countryId={war.attackerId} />

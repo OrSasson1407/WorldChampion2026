@@ -342,7 +342,8 @@ export class SimulationManager {
           attackerId, 
           defenderId, 
           warScore: 0,
-          casualties: { attacker: 0, defender: 0 }
+          casualties: { attacker: 0, defender: 0 },
+          exhaustion: { attacker: 0, defender: 0 }
       };
       console.log(`War declared: ${attackerId} vs ${defenderId}`);
 
@@ -638,7 +639,30 @@ export class SimulationManager {
 
         this.applyLossesToBranches(war.attackerId, attackerLosses);
         this.applyLossesToBranches(war.defenderId, defenderLosses);
-        
+
+        if (!war.exhaustion) war.exhaustion = { attacker: 0, defender: 0 };
+        const attackerCasualtyRatio = attacker.manpower > 0 ? attackerLosses / (attacker.manpower + attackerLosses) : 0.05;
+        const defenderCasualtyRatio = defender.manpower > 0 ? defenderLosses / (defender.manpower + defenderLosses) : 0.05;
+        war.exhaustion.attacker = Math.min(war.exhaustion.attacker + 0.6 + attackerCasualtyRatio * 100, 100);
+        war.exhaustion.defender = Math.min(war.exhaustion.defender + 0.6 + defenderCasualtyRatio * 100, 100);
+
+        if (war.exhaustion.attacker > 40) {
+            attacker.stability = Math.max(attacker.stability - (war.exhaustion.attacker - 40) * 0.05, 0);
+        }
+        if (war.exhaustion.defender > 40) {
+            defender.stability = Math.max(defender.stability - (war.exhaustion.defender - 40) * 0.05, 0);
+        }
+
+        if (war.exhaustion.attacker >= 95 || war.exhaustion.defender >= 95) {
+            const exhaustedParty = war.exhaustion.attacker >= war.exhaustion.defender ? attacker : defender;
+            const otherParty = exhaustedParty.id === attacker.id ? defender : attacker;
+            console.log(`War exhaustion forced peace: ${warId}`);
+            EventGenerator.emit(this.state, exhaustedParty.id, EventCategory.POLITICS, `${exhaustedParty.name} can no longer sustain the war and is forced to sue for peace with ${otherParty.name}.`, 3);
+            EventGenerator.emit(this.state, otherParty.id, EventCategory.POLITICS, `${exhaustedParty.name} has sued for peace due to war exhaustion.`, 2);
+            delete this.state.wars[warId];
+            continue;
+        }
+
         if (Math.abs(war.warScore) > 100) {
             const winner = war.warScore > 0 ? attacker : defender;
             const loser = war.warScore > 0 ? defender : attacker;
