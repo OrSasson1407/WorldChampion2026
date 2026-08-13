@@ -1,4 +1,4 @@
-﻿/**
+/**
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -58,8 +58,49 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
 
   render() {
     if (this.state.error) {
-      return (
-        <div className="border border-red-400 bg-red-50 text-red-800 p-3 rounded text-sm">
+        useEffect(() => {
+    if (playerCountryId && gameState?.countries) {
+      const countries = Object.values(gameState.countries);
+      const allConquered = countries.every(c => c.id === playerCountryId || (c.occupationStatus === 'OCCUPIED' && c.occupiedBy === playerCountryId));
+      if (allConquered && countries.length > 1) {
+        setIsVictory(true);
+      }
+    }
+  }, [gameState, playerCountryId]);
+  return (
+    <div className="border border-red-400 bg-red-50 text-red-800 p-3 rounded text-sm">
+{!playerCountryId && (
+  <div className="fixed top-0 left-0 w-full bg-blue-700 text-white p-4 text-center z-[100] font-extrabold text-xl shadow-2xl animate-pulse cursor-pointer pointer-events-none">
+    🌍 SELECT YOUR NATION: Click on a country on the map to take control and start the game!
+  </div>
+)}
+{playerCountryId && gameState?.countries?.[playerCountryId] && (
+  <div className="fixed top-0 left-0 w-full bg-slate-900 text-white p-2 text-center z-40 border-b-4 border-yellow-600 font-bold flex justify-center gap-6 shadow-lg text-sm md:text-base">
+    <span>🚩 Playing as: <span className="text-yellow-400">{gameState.countries[playerCountryId].name}</span></span>
+    <span className="opacity-50">|</span>
+    <span>💰 Treasury: ${gameState.countries[playerCountryId].economy?.toFixed(0)}</span>
+    <span className="opacity-50">|</span>
+    <span>👥 Manpower: {gameState.countries[playerCountryId].manpower?.toLocaleString()}</span>
+    <span className="opacity-50">|</span>
+    <span>⚖️ Stability: {gameState.countries[playerCountryId].stability?.toFixed(1)}%</span>
+  </div>
+)}
+{isVictory && (
+  <div className="fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-[200] flex-col">
+    <h1 className="text-5xl md:text-7xl text-yellow-500 font-extrabold mb-6 drop-shadow-lg text-center">🏆 WORLD CONQUEST ACHIEVED!</h1>
+    <p className="text-white text-xl md:text-3xl text-center">You have successfully taken over all nations on Earth.</p>
+    <button onClick={() => window.location.reload()} className="mt-8 px-8 py-4 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-500 transition text-xl shadow-lg border-2 border-blue-400">Play Again</button>
+  </div>
+)}
+      
+      
+      
+      
+      
+      
+      
+      
+      
           <p className="font-semibold">{this.props.label} crashed.</p>
           <p className="mt-1 text-xs opacity-80">{this.state.error.message}</p>
           <button
@@ -81,6 +122,9 @@ export default function App() {
   const [gameState, setGameState] = useState<GameState | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedCountryId, setSelectedCountryId] = useState<string | null>(null);
+  const [playerCountryId, setPlayerCountryId] = useState<string | null>(null);
+  const [isVictory, setIsVictory] = useState(false);
+  if (typeof window !== 'undefined') (window as any).playerCountryId = playerCountryId;
   const [targetCountryId, setTargetCountryId] = useState<string | null>(null);
   const [toast, setToast] = useState<{ message: string; success: boolean } | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('map');
@@ -151,8 +195,26 @@ export default function App() {
   const selectedCentralBank = selectedCountryId ? gameState.centralBanks[selectedCountryId] : null;
   const allCountries = Object.values(gameState.countries) as Country[];
 
+    useEffect(() => {
+    if (playerCountryId && gameState?.countries) {
+      const countries = Object.values(gameState.countries);
+      const allConquered = countries.every(c => c.id === playerCountryId || (c.occupationStatus === 'OCCUPIED' && c.occupiedBy === playerCountryId));
+      if (allConquered && countries.length > 1) {
+        setIsVictory(true);
+      }
+    }
+  }, [gameState, playerCountryId]);
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden">
+      
+      
+      
+      
+      
+      
+      
+      
+      
       {/* Top bar - fixed height, never scrolls */}
       <header className="shrink-0 flex items-center justify-between px-4 py-2 border-b border-panel-border">
         <h1 className="text-2xl font-bold m-0 border-none pb-0">World Empire 2027</h1>
@@ -171,16 +233,31 @@ export default function App() {
       {/* Body: nav | content | country panel - only inner panes scroll */}
       <div className="flex-1 flex overflow-hidden min-h-0">
 
-        {/* Left nav = table of contents (תוכן עניינים) */}
+        {/* Left nav = table of contents (׳³ֳ—׳³ג€¢׳³ג€÷׳³ֲ ׳³ֲ¢׳³ֲ ׳³ג„¢׳³ג„¢׳³ֲ ׳³ג„¢׳³ֲ) */}
         <nav className="w-44 shrink-0 border-r border-panel-border overflow-y-auto">
           {TABS.map((tab) => {
             const isWarTab = tab.id === 'war';
             const warCount = Object.keys(gameState.wars).length;
-            return (
-              <button
+              useEffect(() => {
+    if (playerCountryId && gameState?.countries) {
+      const countries = Object.values(gameState.countries);
+      const allConquered = countries.every(c => c.id === playerCountryId || (c.occupationStatus === 'OCCUPIED' && c.occupiedBy === playerCountryId));
+      if (allConquered && countries.length > 1) {
+        setIsVictory(true);
+      }
+    }
+  }, [gameState, playerCountryId]);
+  return (
+    <button
                 key={tab.id}
                 type="button"
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() =>
+      
+      
+      
+      
+      
+       setActiveTab(tab.id)}
                 className={`w-full text-left px-3 py-2.5 text-sm border-b border-panel-border transition-colors ${
                   activeTab === tab.id ? 'bg-blue-600 text-white' : 'hover:bg-gray-100'
                 }`}
@@ -200,7 +277,12 @@ export default function App() {
         <main className="flex-1 overflow-y-auto min-h-0 p-4">
           <ErrorBoundary key={activeTab} label={`${activeTab} panel`}>
           {activeTab === 'map' && (
-            <MapRenderer
+                    
+        
+      
+      
+      
+          <MapRenderer
                 countries={allCountries}
                 allCountries={gameState.countries}
                 wars={gameState.wars}

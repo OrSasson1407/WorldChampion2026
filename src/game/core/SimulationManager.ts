@@ -628,10 +628,44 @@ export class SimulationManager {
         const powerDiff = attackerPower - defenderPower;
         war.warScore += powerDiff / 10;
         
-        const attackerLosses = Math.floor(defenderPower * 500);
-        const defenderLosses = Math.floor(attackerPower * 500);
+        let attackerLosses = Math.floor(defenderPower * 500);
+        let defenderLosses = Math.floor(attackerPower * 500);
         
-        war.casualties.attacker += attackerLosses;
+              // Step 7: Ceasefires
+      if (war.ceasefireTurns && war.ceasefireTurns > 0) {
+        war.ceasefireTurns--;
+        continue;
+      }
+
+      // Step 6: General skill modifier
+      const attackerGeneralSkill = Math.floor(Math.random() * 5) + 1;
+      const defenderGeneralSkill = Math.floor(Math.random() * 5) + 1;
+      attackerLosses = Math.floor(attackerLosses * (1 - (attackerGeneralSkill * 0.05)));
+      defenderLosses = Math.floor(defenderLosses * (1 - (defenderGeneralSkill * 0.05)));
+
+      // Step 12: POW exchange
+      if (!war.pows) war.pows = { attackerHeld: 0, defenderHeld: 0 };
+      war.pows.attackerHeld += Math.floor(defenderLosses * 0.15);
+      war.pows.defenderHeld += Math.floor(attackerLosses * 0.15);
+
+      // Step 10: Refugee flows
+      defender.population = Math.max(0, defender.population - Math.floor(defenderLosses * 0.5));
+      if (defender.stability) defender.stability = Math.max(0, defender.stability - 0.5);
+
+      // Step 9: Peacekeeping intervention
+      if (attacker.internationalReputation < 30) {
+        attackerLosses = Math.floor(attackerLosses * 1.2); 
+      }
+
+      // Step 8: War Crimes/Atrocity options
+      if (war.warCrimesCommitted || (attacker.stability < 30 && Math.random() < 0.1)) {
+         war.warCrimesCommitted = true;
+         attacker.internationalReputation = Math.max(0, attacker.internationalReputation - 2);
+         defender.stability = Math.max(0, defender.stability - 2);
+         war.warScore += 2;
+      }
+
+      war.casualties.attacker += attackerLosses;
         war.casualties.defender += defenderLosses;
         
         attacker.manpower = Math.max(attacker.manpower - attackerLosses, 0);

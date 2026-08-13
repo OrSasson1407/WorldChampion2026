@@ -1,4 +1,5 @@
 export interface Country {
+  blockadedBy?: string[];
   id: string;
   name: string;
   sovereignId: string;
@@ -109,7 +110,18 @@ export enum EspionageType {
   DISINFORMATION = "Disinformation Campaign"
 }
 
+export enum CasusBelli {
+  TERRITORIAL = 'TERRITORIAL',
+  LIBERATION = 'LIBERATION',
+  IDEOLOGICAL = 'IDEOLOGICAL',
+  UNJUSTIFIED = 'UNJUSTIFIED'
+}
+
 export interface War {
+    casusBelli?: CasusBelli;
+  pows?: { attackerHeld: number; defenderHeld: number; };
+  ceasefireTurns?: number;
+  warCrimesCommitted?: boolean;
   id: string;
   attackerId: string;
   defenderId: string;
