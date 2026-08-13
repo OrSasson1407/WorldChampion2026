@@ -119,7 +119,12 @@ export const MapRenderer: React.FC<Props> = ({ allCountries, wars, onSelectCount
                       setTooltip((t) => (t ? { ...t, x: evt.clientX, y: evt.clientY } : t));
                     }}
                     onMouseLeave={() => setTooltip(null)}
-                    onClick={() => country && onSelectCountry(country.id)}
+                    onClick={() =>
+                      country &&
+                      onSelectCountry(
+                        country.occupationStatus === 'ANNEXED' ? country.controllerId : country.id
+                      )
+                    }
                   />
                 );
               })

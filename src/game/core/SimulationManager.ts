@@ -1,4 +1,4 @@
-﻿import { GameState } from './GameState';
+import { GameState } from './GameState';
 import { Country, Army, War, EspionageType, Government, PoliticalParty, ResourceType, MilitaryBranch, MilitaryBranchType, General, Treaty, TreatyType, Sanction, IntelNetwork, IntelCategory, EventCategory } from './Models';
 import { EventGenerator } from './EventGenerator';
 import { AIManager } from './AIManager';
@@ -645,6 +645,7 @@ export class SimulationManager {
             console.log(`War ended: ${warId}. Winner: ${winner.name}`);
             EventGenerator.emit(this.state, winner.id, EventCategory.MILITARY, `${winner.name} has won the war against ${loser.name}.`, 3);
             EventGenerator.emit(this.state, loser.id, EventCategory.MILITARY, `${loser.name} has been defeated by ${winner.name}.`, 3);
+            this.conquerCountry(winner.id, loser.id);
             delete this.state.wars[warId];
         }
     }
@@ -662,6 +663,72 @@ export class SimulationManager {
           branch.manpower = Math.max(branch.manpower - perBranch, 0);
           branch.morale = Math.max((branch.morale ?? 70) - 3, 0);
       }
+  }
+
+  /**
+   * Resolves a war win: the loser is absorbed into the winner for the rest
+   * of THIS game only. This never touches Firestore - it's pure in-memory
+   * state, so a page refresh / new game always starts every country fresh
+   * again (see DataManager.loadInitialCountries, which reads from the local
+   * countries.json every time, never from a "conquered" DB record).
+   */
+  private conquerCountry(winnerId: string, loserId: string): void {
+      const winner = this.state.countries[winnerId];
+      const loser = this.state.countries[loserId];
+      if (!winner || !loser) return;
+      if (loser.occupationStatus === "ANNEXED") return; // already absorbed by someone
+
+      // Winner grows: absorb the loser''s size, economy and military.
+      winner.population += loser.population;
+      winner.gdp += loser.gdp;
+      winner.treasury += loser.treasury;
+      winner.manpower += loser.manpower;
+      winner.equipment += loser.equipment;
+      winner.infrastructure += loser.infrastructure;
+
+      // Every province (i.e. the loser''s territory/size on the map) changes hands.
+      for (const provinceId in this.state.provinces) {
+          const province = this.state.provinces[provinceId];
+          if (province.ownerCountryId === loserId) {
+              province.ownerCountryId = winnerId;
+          }
+      }
+
+      // Map color: getCountryColor() always looks up the CONTROLLER''s color,
+      // so setting controllerId is all that''s needed for the territory to
+      // repaint as the winner''s color.
+      loser.controllerId = winnerId;
+      loser.sovereignId = winnerId;
+      loser.occupationStatus = "ANNEXED";
+
+      // The loser stops functioning as an active nation - zeroed out so it
+      // can''t act, be attacked productively, or show stale stats if selected.
+      loser.population = 0;
+      loser.gdp = 0;
+      loser.treasury = 0;
+      loser.manpower = 0;
+      loser.equipment = 0;
+      loser.militaryPower = 0;
+      loser.readiness = 0;
+      loser.infrastructure = 0;
+
+      // Pull the loser out of every other war it was part of - a country
+      // that no longer exists can''t keep fighting.
+      for (const warId in this.state.wars) {
+          const w = this.state.wars[warId];
+          if (w.attackerId === loserId || w.defenderId === loserId) {
+              delete this.state.wars[warId];
+          }
+      }
+
+      EventGenerator.emit(
+          this.state,
+          winnerId,
+          EventCategory.MILITARY,
+          `${loser.name} has been annexed by ${winner.name}. Its territory, population and treasury now belong to ${winner.name}.`,
+          4
+      );
+      console.log(`${loser.name} annexed by ${winner.name} (in-memory only, not persisted to DB).`);
   }
 
   private advanceDate(): void {
