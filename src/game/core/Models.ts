@@ -1,4 +1,4 @@
-﻿export interface Country {
+export interface Country {
   id: string;
   name: string;
   sovereignId: string;
@@ -41,6 +41,11 @@
   color: string;
   // Phase 7: AI personality (optional so old seed data doesn't break)
   aiPersonality?: AIPersonality;
+  // Phase 8: AI behavior upgrade -- persistent goal + grudge memory
+  aiGoal?: "EXPAND" | "CONSOLIDATE" | "REBUILD";
+  aiGoalTurns?: number;
+  aiRivalId?: string;
+  aiGrudgeTurns?: number;
 }
 
 export enum ResourceType {

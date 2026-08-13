@@ -1,1 +1,88 @@
 @import "tailwindcss";
+
+@theme {
+  --color-void: #0A0E14;
+  --color-panel: #131922;
+  --color-panel-border: #2A3444;
+  --color-accent: #F0A020;
+  --color-accent-alt: #00C2D9;
+  --color-danger: #FF3B3B;
+  --color-text-primary: #E8ECF1;
+  --color-text-muted: #6B7684;
+
+  --font-display: "Rajdhani", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --color-gray-100: #1A212C;
+  --color-gray-200: #2A3444;
+  --color-gray-300: #3A4555;
+  --color-gray-400: #5B6675;
+  --color-gray-500: #8A94A3;
+  --color-gray-700: #C7CDD6;
+
+  --color-blue-500: #2FA8C4;
+  --color-blue-600: #F0A020;
+  --color-blue-700: #C9820E;
+  --color-green-600: #3E8E5B;
+  --color-green-700: #2F6E46;
+  --color-purple-600: #00C2D9;
+  --color-purple-700: #009BAF;
+  --color-yellow-600: #D9A441;
+  --color-yellow-700: #B8872F;
+  --color-yellow-800: #8F6A22;
+  --color-indigo-600: #5B6EE0;
+  --color-indigo-700: #4756B8;
+  --color-red-600: #FF3B3B;
+  --color-red-700: #D42A2A;
+  --color-red-800: #B32222;
+  --color-orange-50: #241A10;
+  --color-orange-400: #E08A3C;
+  --color-orange-600: #D9721F;
+  --color-orange-700: #B85E19;
+}
+
+body {
+  background-color: var(--color-void);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+}
+
+.border.p-4 {
+  background-color: var(--color-panel);
+  border-color: var(--color-panel-border) !important;
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+}
+
+h1 {
+  color: var(--color-accent);
+  text-transform: uppercase;
+}
+
+h2 {
+  color: var(--color-text-primary);
+  border-bottom: 1px solid var(--color-panel-border);
+  padding-bottom: 0.4rem;
+}
+
+button.rounded {
+  border-radius: 0;
+  clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  transition: filter 0.15s ease;
+}
+button.rounded:hover {
+  filter: brightness(1.15);
+}
+
+select, input {
+  background-color: var(--color-panel);
+  color: var(--color-text-primary);
+}
